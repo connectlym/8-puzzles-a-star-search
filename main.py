@@ -20,7 +20,8 @@ class Puzzle:
         self.board = board # a 2D array input representing the board.
         self.heuristic_value = 0 # heuristic value of current board.
         self.cost = 0 # depth of current board.
-        self.parent = None # parent board of current board
+        self.parent = None
+        self.next = None
 
     def print(self):
         """
@@ -115,16 +116,38 @@ class Puzzle:
 
         return moves
 
-    def costFunction(self):
-        """
-        Calculates the cost of path g(n) from the initial board to the current board.
-        Notice that f(n) = g(n) + h(n).
-        :return (int) cost - the number of actions already taken.
-        """
-        legal_moves = self.getLegalMoves()
-        ava_blank = self.getIndex(0)
-        self.cost += 1
-        return self.cost
+    def swapBoard(self, blank_index, legal_move_index):
+        temp = self.board[legal_move_index[0]][legal_move_index[1]]
+        # print("temp: "+ str(temp))
+        self.board[legal_move_index[0]][legal_move_index[1]] = 0
+        self.board[blank_index[0]][blank_index[1]] = temp
+        #print("***")
+        #self.print()
+
+    def copyBoard(self):
+        copy_board = [[0,0,0],[0,0,0],[0,0,0]]
+        for i in range(0,3):
+            for j in range(0,3):
+                copy_board[i][j] = self.board[i][j]
+        return copy_board
+
+    def getChildren(self):
+        blank = self.getIndex(0)
+        legals = self.getLegalMoves()
+        children_num = len(legals)
+        children_states = []
+        for i in range(0, children_num):
+            temp_board = self.copyBoard()
+            temp = Puzzle(temp_board)
+            temp.swapBoard(blank, legals[i])
+            child_board = temp.copyBoard()
+            child = Puzzle(child_board)
+            child.parent = self
+            child.cost += 1
+            # print(child.cost)
+            children_states.append(child)
+
+        return children_states
 
     def heuristicFunction(self):
         """
@@ -132,14 +155,15 @@ class Puzzle:
         Notice that f(n) = g(n) + h(n).
         :return (int) count - the number of different slots between current board and goal.
         """
-        board_to_check = [0,0,0,0,0,0,0,0,0]
+        board = [0,0,0,0,0,0,0,0,0]
+        children_states = self.getChildren()
         for i in range(0,3):
             for j in range(0,3):
-                board_to_check[i+j] = self.board[i][j]
+                board[i+j] = board_to_check[i][j]
         board_is_goal = [0,1,2,3,4,5,6,7,8]
         count = 0
-        for i in range(len(board_to_check)):
-            if board_to_check[i] != board_is_goal[i]:
+        for i in range(0,9):
+            if board[i] != board_is_goal[i]:
                 count += 1
         return count
 
@@ -161,7 +185,6 @@ class Puzzle:
             if board_to_check.board not in explored:
                 explored.append(board_to_check.board)
                 for board in self.getLegalMoves(board_to_check.board):
-                    # j = PathNode(i[0], i[1], i[2], next, next.costsum + i[2], heuristic(i[0], problem))
                     frontier.push((board, self.heuristicFunction(board)))
         return tracks
 
@@ -193,9 +216,16 @@ def main():
     board = [[7,2,4],[5,0,6],[8,3,1]]
     puzzle = Puzzle(board)
     puzzle.print()
-    # print(puzzle.getIndex(0))
-    # for i in puzzle.getLegalMoves():
-    #    print(puzzle.board[i[0]][i[1]])
+    # ****************************************
+    #   Here are lines to test functions.
+    # ****************************************
+    #print(puzzle.getIndex(0))
+    #for i in puzzle.getLegalMoves():
+    #   print(puzzle.board[i[0]][i[1]])
+    #childrens = puzzle.getChildren()
+    #for i in range(0,4):
+    #   childrens[i].print()
+    # ****************************************
 
 if __name__ == "__main__":
     main()
