@@ -118,7 +118,7 @@ class Puzzle:
 
     def swapBoard(self, blank_index, legal_move_index):
         temp = self.board[legal_move_index[0]][legal_move_index[1]]
-        # print("temp: "+ str(temp))
+        #print("temp: "+ str(temp))
         self.board[legal_move_index[0]][legal_move_index[1]] = 0
         self.board[blank_index[0]][blank_index[1]] = temp
         #print("***")
@@ -130,6 +130,27 @@ class Puzzle:
             for j in range(0,3):
                 copy_board[i][j] = self.board[i][j]
         return copy_board
+
+    def heuristicFunction(self):
+        """
+        Implements a heuristic function h(n).
+        Notice that f(n) = g(n) + h(n).
+        :return (int) count - the number of different slots between current board and goal.
+        """
+        board = [0,0,0,0,0,0,0,0,0]
+        #children_states = self.getChildren()
+
+        for i in range(0,3):
+            for j in range(0,3):
+                board[i+j] = self.board[i][j]
+        board_is_goal = [0,1,2,3,4,5,6,7,8]
+        value = 0
+
+        for i in range(0,9):
+            if board[i] != board_is_goal[i]:
+                value += 1
+
+        return value
 
     def getChildren(self):
         blank = self.getIndex(0)
@@ -143,49 +164,34 @@ class Puzzle:
             child_board = temp.copyBoard()
             child = Puzzle(child_board)
             child.parent = self
-            child.cost += 1
+            child.cost = 1 + child.heuristicFunction()
             # print(child.cost)
             children_states.append(child)
 
         return children_states
 
-    def heuristicFunction(self):
-        """
-        Implements a heuristic function h(n).
-        Notice that f(n) = g(n) + h(n).
-        :return (int) count - the number of different slots between current board and goal.
-        """
-        board = [0,0,0,0,0,0,0,0,0]
-        children_states = self.getChildren()
-        for i in range(0,3):
-            for j in range(0,3):
-                board[i+j] = board_to_check[i][j]
-        board_is_goal = [0,1,2,3,4,5,6,7,8]
-        count = 0
-        for i in range(0,9):
-            if board[i] != board_is_goal[i]:
-                count += 1
-        return count
-
     def AStarSearch(self):
 
+        initial_state = Puzzle(self.board)
+        initial_value = initial_state.heuristicFunction()
         frontier = PriorityQueue()
-        frontier.push((self.board, 0))
+        frontier.push(initial_state, initial_value)
         explored = []
         tracks = []
 
         while not frontier.isEmpty():
-            board_to_check = frontier.pop()
-            if self.isGoal():
-                while board_to_check.parent != None:
-                    tracks.append(board_to_check)
-                    board_to_check = board_to_check.parent
+            state_to_check = frontier.pop()[0]
+            if state_to_check.isGoal():
+                while state_to_check.parent != None:
+                    tracks.append(state_to_check.board)
+                    state_to_check = state_to_check.parent
                     tracks.reverse()
                 return tracks
-            if board_to_check.board not in explored:
-                explored.append(board_to_check.board)
-                for board in self.getLegalMoves(board_to_check.board):
-                    frontier.push((board, self.heuristicFunction(board)))
+            if state_to_check.board not in explored:
+                explored.append(state_to_check.board)
+                childrens = state_to_check.getChildren()
+                for state in childrens:
+                    frontier.push(state, state.cost+state.heuristicFunction())
         return tracks
 
 
@@ -198,12 +204,13 @@ class PriorityQueue:
         self.priority_queue = []
         # self.count = 0
 
-    def push(self, item):
-        heapq.heappush(self.priority_queue, item)
-        # self.count += 1
+    def push(self, item, value):
+        entry = (item, value)
+        self.priority_queue.append(entry)
+        sorted(self.priority_queue, key=lambda entry: entry[1])
 
     def pop(self):
-        return heapq.heappop(self.priority_queue)
+        return self.priority_queue.pop(0)
 
     def isEmpty(self):
         return len(self.priority_queue) == 0
@@ -226,6 +233,7 @@ def main():
     #for i in range(0,4):
     #   childrens[i].print()
     # ****************************************
+    puzzle.AStarSearch()
 
 if __name__ == "__main__":
     main()
