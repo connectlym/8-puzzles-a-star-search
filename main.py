@@ -11,21 +11,22 @@
 
 import heapq, random
 
+goal_board = [[0,1,2], [3,4,5], [6,7,8]]
 
 class Puzzle:
     """
-
+    Initials the 8 puzzle game and the solver using A* algorithm with manhattan distance as heuristic func.
     """
     def __init__(self, board):
         self.board = board # a 2D array input representing the board.
         self.cost = 0 # depth of current board.
+        self.h = 0
         self.parent = None
 
     def print(self):
         """
         Prints out the current board.
         """
-
         for i in range(0,3):
             for j in range(0,3):
                 if self.board[i][j] == 0:
@@ -45,7 +46,6 @@ class Puzzle:
         :return (bool) True - if current board match the goal board,
                  (bool) False - otherwise.
         """
-        goal_board = [[0,1,2], [3,4,5], [6,7,8]]
         for i in range(0,3):
             for j in range(0,3):
                 # if there is a difference btw current board and goal board, return False.
@@ -53,6 +53,9 @@ class Puzzle:
                     return False
         # otherwise, return True.
         return True
+
+    def isEqual(self, other_state):
+        return self.board == other_state.board
 
     def getIndex(self, num):
         """
@@ -111,6 +114,11 @@ class Puzzle:
         return moves
 
     def swapBoard(self, blank_index, legal_move_index):
+        """
+        Swaps the value at specific index at current board.
+        :param (int tuple) blank_index - the index of blank
+        :param (int tuple) legal_move_index - the index of variable waiting for swap
+        """
         temp = self.board[legal_move_index[0]][legal_move_index[1]]
         #print("temp: "+ str(temp))
         self.board[legal_move_index[0]][legal_move_index[1]] = 0
@@ -119,6 +127,10 @@ class Puzzle:
         #self.print()
 
     def copyBoard(self):
+        """
+        Copies self.board .
+        :return (int array) copy_board - a copy of self.board
+        """
         copy_board = [[0,0,0],[0,0,0],[0,0,0]]
         for i in range(0,3):
             for j in range(0,3):
@@ -127,28 +139,31 @@ class Puzzle:
 
     def heuristicFunction(self):
         """
-        Implements a heuristic function h(n).
+        Implements a heuristic function h(n) using manhattan distance function.
         Notice that f(n) = g(n) + h(n).
-        :return (int) count - the number of different slots between current board and goal.
+        :return (int) distance - the manhattan distance of current node.
         """
-
         distance = 0
-
         for i in range(0,3):
             for j in range(0,3):
                 value = self.board[i][j]
                 if value != 0:
-                    target_row = value / 3
+                    target_row = int(value / 3)
                     target_col = value % 3
                     d_row = i - target_row
                     d_col = j - target_col
                     distance += abs(d_row) + abs(d_col)
-
+        # self.cost += distance
         return distance
 
     def getChildren(self):
+        """
+        Gets all children of current board.
+        :return (puzzle array) children_states - an array storing all children puzzle objs of current board.
+        """
         blank = self.getIndex(0)
         legals = self.getLegalMoves()
+
         children_num = len(legals)
         children_states = []
         for i in range(0, children_num):
@@ -157,25 +172,24 @@ class Puzzle:
             temp.swapBoard(blank, legals[i])
             child_board = temp.copyBoard()
             child = Puzzle(child_board)
+            child.cost = self.cost + 1
             child.parent = self
-            child.cost = 1 + child.heuristicFunction()
-            #print("***")
-            #child.parent.print()
-            #print("---")
-            #child.print()
             children_states.append(child)
 
         return children_states
 
     def AStarSearch(self):
-
+        """
+        A* search.
+        :return (puzzle array) tracks - the path return
+        """
         initial_state = Puzzle(self.board)
         initial_value = initial_state.heuristicFunction()
         frontier = PriorityQueue()
         frontier.push(initial_state, initial_value)
         explored = []
         tracks = []
-
+        moves = 0
         while not frontier.isEmpty():
             state_to_check = frontier.pop()
             if state_to_check.isGoal():
@@ -186,11 +200,12 @@ class Puzzle:
                     state_to_check = state_to_check.parent
                 tracks.reverse()
                 return tracks
+            moves += 1
             if state_to_check.board not in explored:
                 explored.append(state_to_check.board)
                 childrens = state_to_check.getChildren()
                 for state in childrens:
-                    frontier.push(state, state.cost+state.heuristicFunction())
+                    frontier.push(state, state.cost + state.heuristicFunction())
         return tracks
 
     def printSteps(self):
@@ -227,7 +242,8 @@ class PriorityQueue:
 
 def main():
     #board = [[7,2,4],[5,0,6],[8,3,1]]
-    board = [[1,2,5,],[3,0,4],[6,7,8]]
+    board = [[8,0,6],[5,4,7],[2,3,1]]
+    #board = [[1,2,5],[3,0,4],[6,7,8]]
     puzzle = Puzzle(board)
     #puzzle.print()
     # ****************************************
