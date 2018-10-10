@@ -18,21 +18,26 @@ class Puzzle:
     """
     def __init__(self, board):
         self.board = board # a 2D array input representing the board.
-        self.h = 0 # heuristic value of current board.
+        self.heuristic_value = 0 # heuristic value of current board.
         self.cost = 0 # depth of current board.
-        self._parent = None # parent board of current board, probably useful? Check after finish Puzzle class.
+        self.parent = None # parent board of current board
 
     def print(self):
         """
         Prints out the current board.
         """
+        if self.cost == 0:
+            print("Welcome! Here is the initial board.\nIf you wanna test other boards, dive into the code!")
+        else:
+            print("This is step "+str(self.cost)+" of the path." )
+
         for i in range(0,3):
             for j in range(0,3):
                 if self.board[i][j] == 0:
-                    print(" ")
+                    print(" ", end=" ")
                 else:
-                    print(self.board[i][j])
-            print("\n")
+                    print(self.board[i][j], end=" ")
+            print("\n", end="")
 
     def isGoal(self):
         """
@@ -48,7 +53,7 @@ class Puzzle:
         goal_board = [[0,1,2], [3,4,5], [6,7,8]]
         for i in range(0,3):
             for j in range(0,3):
-                # if there is a difference btw current board and goal board, return False and break.
+                # if there is a difference btw current board and goal board, return False.
                 if self.board[i][j] != goal_board[i][j]:
                     return False
         # otherwise, return True.
@@ -66,7 +71,7 @@ class Puzzle:
                     return (i,j)
         return (999,999)
 
-    def getLegalMoves(self, curr_board):
+    def getLegalMoves(self):
         """
         Get the available items to move according to current blank.
         :return: (tuple array) moves - array of tuples representing indices of legal moves.
@@ -109,7 +114,7 @@ class Puzzle:
             moves.append((2,1))
 
         return moves
-    
+
     def costFunction(self):
         """
         Calculates the cost of path g(n) from the initial board to the current board.
@@ -184,5 +189,14 @@ class PriorityQueue:
         return self.priority_queue[0]
 
 
+def main():
+    board = [[7,2,4],[5,0,6],[8,3,1]]
+    puzzle = Puzzle(board)
+    puzzle.print()
+    # print(puzzle.getIndex(0))
+    # for i in puzzle.getLegalMoves():
+    #    print(puzzle.board[i[0]][i[1]])
 
+if __name__ == "__main__":
+    main()
 
