@@ -18,19 +18,13 @@ class Puzzle:
     """
     def __init__(self, board):
         self.board = board # a 2D array input representing the board.
-        self.heuristic_value = 0 # heuristic value of current board.
         self.cost = 0 # depth of current board.
         self.parent = None
-        self.next = None
 
     def print(self):
         """
         Prints out the current board.
         """
-        if self.cost == 0:
-            print("Welcome! Here is the initial board.\nIf you wanna test other boards, dive into the code!")
-        else:
-            print("This is step "+str(self.cost)+" of the path." )
 
         for i in range(0,3):
             for j in range(0,3):
@@ -137,20 +131,20 @@ class Puzzle:
         Notice that f(n) = g(n) + h(n).
         :return (int) count - the number of different slots between current board and goal.
         """
-        board = [0,0,0,0,0,0,0,0,0]
-        #children_states = self.getChildren()
+
+        distance = 0
 
         for i in range(0,3):
             for j in range(0,3):
-                board[i+j] = self.board[i][j]
-        board_is_goal = [0,1,2,3,4,5,6,7,8]
-        value = 0
+                value = self.board[i][j]
+                if value != 0:
+                    target_row = value / 3
+                    target_col = value % 3
+                    d_row = i - target_row
+                    d_col = j - target_col
+                    distance += abs(d_row) + abs(d_col)
 
-        for i in range(0,9):
-            if board[i] != board_is_goal[i]:
-                value += 1
-
-        return value
+        return distance
 
     def getChildren(self):
         blank = self.getIndex(0)
@@ -165,7 +159,10 @@ class Puzzle:
             child = Puzzle(child_board)
             child.parent = self
             child.cost = 1 + child.heuristicFunction()
-            # print(child.cost)
+            #print("***")
+            #child.parent.print()
+            #print("---")
+            #child.print()
             children_states.append(child)
 
         return children_states
@@ -180,12 +177,14 @@ class Puzzle:
         tracks = []
 
         while not frontier.isEmpty():
-            state_to_check = frontier.pop()[0]
+            state_to_check = frontier.pop()
             if state_to_check.isGoal():
+                self.board = state_to_check.board
                 while state_to_check.parent != None:
-                    tracks.append(state_to_check.board)
+                    #state_to_check.print()
+                    tracks.append(state_to_check)
                     state_to_check = state_to_check.parent
-                    tracks.reverse()
+                tracks.reverse()
                 return tracks
             if state_to_check.board not in explored:
                 explored.append(state_to_check.board)
@@ -194,35 +193,43 @@ class Puzzle:
                     frontier.push(state, state.cost+state.heuristicFunction())
         return tracks
 
+    def printSteps(self):
+        print("Welcome! Here is the initial board.\nIf you wanna test other boards, dive into the code!")
+        self.print()
+        tracks = self.AStarSearch()
+        for i in range(0, len(tracks)):
+            print("This is step "+str(i+1))
+            tracks[i].print()
+        print("Congratulations! You've solved the board!\n")
+
 
 class PriorityQueue:
     """
       Applies the priority queue data structure.
       Items inserted is in the order of values related to them.
     """
-    def __init__(self):
-        self.priority_queue = []
-        # self.count = 0
+    def  __init__(self):
+        self.heap = []
+        self.count = 0
 
-    def push(self, item, value):
-        entry = (item, value)
-        self.priority_queue.append(entry)
-        sorted(self.priority_queue, key=lambda entry: entry[1])
+    def push(self, item, priority):
+        entry = (priority, self.count, item)
+        heapq.heappush(self.heap, entry)
+        self.count += 1
 
     def pop(self):
-        return self.priority_queue.pop(0)
+        (_, _, item) = heapq.heappop(self.heap)
+        return item
 
     def isEmpty(self):
-        return len(self.priority_queue) == 0
-
-    def firstItem(self):
-        return self.priority_queue[0]
+        return len(self.heap) == 0
 
 
 def main():
-    board = [[7,2,4],[5,0,6],[8,3,1]]
+    #board = [[7,2,4],[5,0,6],[8,3,1]]
+    board = [[1,2,5,],[3,0,4],[6,7,8]]
     puzzle = Puzzle(board)
-    puzzle.print()
+    #puzzle.print()
     # ****************************************
     #   Here are lines to test functions.
     # ****************************************
@@ -233,7 +240,9 @@ def main():
     #for i in range(0,4):
     #   childrens[i].print()
     # ****************************************
-    puzzle.AStarSearch()
+    #puzzle.AStarSearch()
+    puzzle.printSteps()
+    #puzzle.print()
 
 if __name__ == "__main__":
     main()
